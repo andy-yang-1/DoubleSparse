@@ -62,8 +62,8 @@ if __name__ == '__main__':
     parser.add_argument('--architecture', type=str, default="llama", choices=["llama", "mistral", "mixtral", "qwen2"])
     parser.add_argument('--channel', type=str, default="qk", choices=["q", "k", "qk"])
     parser.add_argument('--heavy_const', type=int, default=128, help='Heavy constant')
-    parser.add_argument('--group_factor', type=int, default=4, help='Group factor')
-    parser.add_argument('--q_bits', type=int, default=4, help='Quantization bits')
+    parser.add_argument('--group_factor', type=int, default=2, help='Group factor')
+    parser.add_argument('--q_bits', type=int, default=2, help='Quantization bits')
 
     args = parser.parse_args()
 
