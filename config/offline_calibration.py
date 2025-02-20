@@ -10,6 +10,7 @@ from transformers.models.llama.modeling_llama import LlamaAttention, repeat_kv
 from transformers.models.mistral.modeling_mistral import MistralAttention
 from transformers.models.mixtral.modeling_mixtral import MixtralAttention
 from transformers.models.mllama.modeling_mllama import MllamaTextSelfAttention
+from transformers.models.qwen2.modeling_qwen2 import Qwen2Attention
 from datasets import load_dataset
 from functools import partial
 import tqdm
@@ -139,7 +140,7 @@ def get_calib_feat(model: nn.Module, tokenizer):
                 m.register_forward_hook(
                     partial(get_k_hook, name=name, output_dict=output_dict, model=model)))
         # attention hook
-        if isinstance(m, LlamaAttention) or isinstance(m, MistralAttention) or isinstance(m, MixtralAttention) or isinstance(m, MllamaTextSelfAttention):
+        if isinstance(m, LlamaAttention) or isinstance(m, MistralAttention) or isinstance(m, MixtralAttention) or isinstance(m, MllamaTextSelfAttention) or isinstance(m, Qwen2Attention):
             hooks.append(
                 m.register_forward_hook(
                     partial(get_qk_hook, name=name, output_dict=output_dict), with_kwargs=True))

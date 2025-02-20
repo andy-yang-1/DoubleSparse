@@ -9,6 +9,7 @@ import gc
 
 from modify_llama import convert_kvcache_llama_heavy_recent, convert_llama_channel_config
 from modify_mistral import convert_kvcache_mistral_heavy_recent, convert_mistral_channel_config
+from modify_qwen2 import convert_kvcache_qwen2_heavy_recent, convert_qwen2_channel_config
 # from modify_mixtral import convert_kvcache_mixtral_heavy_recent, convert_mixtral_channel_config
 from streaming_llama import convert_streaming
 from rtn_llama import convert_rtn
@@ -23,7 +24,7 @@ def evaluate(model, tokenizer):
     torch.cuda.empty_cache()
     gc.collect()
 
-    max_seq_len = 2048
+    max_seq_len = 4096
 
     testenc = testenc.input_ids.to(model.device)
     print(testenc.shape)
@@ -58,7 +59,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--model_path', type=str, default="meta-llama/Llama-2-7b-hf", help='Selected model')
     parser.add_argument('--offloading', action='store_true', help='Whether to use offloading')
-    parser.add_argument('--architecture', type=str, default="llama", choices=["llama", "mistral", "mixtral"])
+    parser.add_argument('--architecture', type=str, default="llama", choices=["llama", "mistral", "mixtral", "qwen2"])
     parser.add_argument('--channel', type=str, default="qk", choices=["q", "k", "qk"])
     parser.add_argument('--heavy_const', type=int, default=128, help='Heavy constant')
     parser.add_argument('--group_factor', type=int, default=4, help='Group factor')
@@ -71,17 +72,9 @@ if __name__ == '__main__':
     channel_path = "config/" + model_path + ".json"
 
 
-    if "70b" in model_path:
-        # TODO: support more than 8 x a10g
-        device_map = {"model.embed_tokens": 0, "model.norm": 7, "lm_head": 7}
-        for i in range(80):
-            device_map[f"model.layers.{i}"] = i // 10
-    else:
-        device_map = "auto"
+    kwargs = {"torch_dtype": torch.float16, "device_map": "auto"}
 
-    kwargs = {"torch_dtype": torch.float16}
-
-    model = AutoModelForCausalLM.from_pretrained(model_path, **kwargs).cuda()
+    model = AutoModelForCausalLM.from_pretrained(model_path, **kwargs)
     tokenizer = AutoTokenizer.from_pretrained(model_path)
     config = AutoConfig.from_pretrained(model_path)
 
@@ -104,6 +97,9 @@ if __name__ == '__main__':
         elif args.architecture == "mistral":
             model = convert_kvcache_mistral_heavy_recent(model, config, args.heavy_const, args.group_factor, args.q_bits)
             model = convert_mistral_channel_config(model, channel_config, args.channel)
+        elif args.architecture == "qwen2":
+            model = convert_kvcache_qwen2_heavy_recent(model, config, args.heavy_const, args.group_factor, args.q_bits)
+            model = convert_qwen2_channel_config(model, channel_config, args.channel)
 
 
     # model = convert_kvcache_mixtral_heavy_recent(model, config, 128, 4, 4)
