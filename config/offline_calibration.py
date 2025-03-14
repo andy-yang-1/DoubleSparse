@@ -183,10 +183,7 @@ if __name__ == '__main__':
         vals, inds = torch.sort(output_dict[k], dim=-1, descending=True)
         channel_config[k] = inds.tolist()
         
-    #model_owner, model_name = model_path.split("/")
-    path_parts = [p for p in model_path.split("/") if p.strip()]  
-    model_owner = path_parts[-2]
-    model_name = path_parts[-1]
+    model_owner, model_name = model_path.split("/")
     
     output_dir = os.path.join(args.output_dir, model_owner)
     if not os.path.exists(output_dir):
