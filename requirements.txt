@@ -67,7 +67,7 @@ tokenizers==0.14.1
 # torchaudio==2.1.0+cu118
 # torchvision==0.16.0+cu118
 tqdm==4.66.1
-transformers==4.34.1
+transformers==4.45.0
 # triton==2.1.0
 # triton-nightly==2.1.0.post20231215064248
 typing_extensions==4.8.0
