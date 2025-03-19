@@ -97,7 +97,7 @@ class LlamaAttention_heavy_hitter(nn.Module):
         #     gc.collect()
         #     torch.cuda.empty_cache()
         
-        if q_len > 1:
+        if q_len > 1 or self.layer_idx < 2:
             return self.flash_forward(
                 hidden_states=hidden_states,
                 attention_mask=attention_mask,

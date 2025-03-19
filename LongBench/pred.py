@@ -84,6 +84,8 @@ def build_chat(tokenizer, prompt, model_name):
         prompt = header + f" ### Human: {prompt}\n###"
     elif "internlm" in model_name:
         prompt = f"<|User|>:{prompt}<eoh>\n<|Bot|>:"
+    elif "llama3.1" in model_name:
+        prompt = f"<|begin_of_text|><|start_header_id|>user<|end_header_id|> {prompt} <|eot_id|>\n<|start_header_id|>assistant<|end_header_id|>"
     return prompt
 
 
@@ -288,7 +290,8 @@ def load_model_and_tokenizer(path, model_name, device):
         enable_quest_attention_eval(model, args)
         
     if args.ds:
-        channel_path = "/home/andy/DoubleSparse-backup/config/" + path + ".json"
+        # TODO: remove hard-coded path
+        channel_path = "/root/DoubleSparse/config/" + path + ".json"
         config = AutoConfig.from_pretrained(path)
         channel_config = None
         with open(channel_path, "r") as f:

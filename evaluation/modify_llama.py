@@ -97,6 +97,19 @@ class LlamaAttention_heavy_hitter(nn.Module):
         #     gc.collect()
         #     torch.cuda.empty_cache()
 
+        if self.layer_idx < 2:
+            return self.flash_forward(
+                hidden_states=hidden_states,
+                attention_mask=attention_mask,
+                position_ids=position_ids,
+                past_key_value=past_key_value,
+                output_attentions=output_attentions,
+                use_cache=use_cache,
+                cache_position=cache_position,
+                position_embeddings=position_embeddings,
+                **kwargs,
+            )
+
         if self.config.pretraining_tp > 1:
             key_value_slicing = (self.num_key_value_heads * self.head_dim) // self.config.pretraining_tp
             query_slices = self.q_proj.weight.split(
@@ -276,6 +289,7 @@ def convert_kvcache_llama_heavy_recent(model, config, heavy_const=256, group_fac
             new_module.group_factor = group_factor
             new_module.label_bits = label_bits
             model._modules[name] = new_module
+            model._modules[name].flash_forward = module.forward
 
     return model
 

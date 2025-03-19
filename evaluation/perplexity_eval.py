@@ -13,8 +13,8 @@ from modify_qwen2 import convert_kvcache_qwen2_heavy_recent, convert_qwen2_chann
 # from modify_mixtral import convert_kvcache_mixtral_heavy_recent, convert_mixtral_channel_config
 from streaming_llama import convert_streaming
 from rtn_llama import convert_rtn
-from offload_llama import convert_kvcache_llama_offloading, convert_llama_offloading_channel_config
-from offload_mistral import convert_kvcache_mistral_offloading, convert_mistral_offloading_channel_config
+# from offload_llama import convert_kvcache_llama_offloading, convert_llama_offloading_channel_config
+# from offload_mistral import convert_kvcache_mistral_offloading, convert_mistral_offloading_channel_config
 
 
 def evaluate(model, tokenizer):
@@ -57,10 +57,10 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description='Your CLI description.')
 
-    parser.add_argument('--model_path', type=str, default="meta-llama/Llama-2-7b-hf", help='Selected model')
-    parser.add_argument('--offloading', action='store_true', help='Whether to use offloading')
+    parser.add_argument('--model_path', type=str, default="meta-llama/Llama-3.1-8B", help='Selected model')
+    parser.add_argument('--mode', type=str, default="ds", choices=["ds", "ds-offload", "dense"], help='Whether to use offloading')
     parser.add_argument('--architecture', type=str, default="llama", choices=["llama", "mistral", "mixtral", "qwen2"])
-    parser.add_argument('--channel', type=str, default="qk", choices=["q", "k", "qk"])
+    parser.add_argument('--channel', type=str, default="q", choices=["q", "k", "qk"])
     parser.add_argument('--heavy_const', type=int, default=128, help='Heavy constant')
     parser.add_argument('--group_factor', type=int, default=2, help='Group factor')
     parser.add_argument('--q_bits', type=int, default=2, help='Quantization bits')
@@ -83,14 +83,7 @@ if __name__ == '__main__':
     with open(channel_path, "r") as f:
         channel_config = json.load(f)
 
-    if args.offloading:
-        if args.architecture == "llama":
-            model = convert_kvcache_llama_offloading(model, config, args.heavy_const, args.group_factor, args.q_bits, [0,1,31])
-            model = convert_llama_offloading_channel_config(model, channel_config, args.channel)
-        elif args.architecture == "mistral":
-            model = convert_kvcache_mistral_offloading(model, config, args.heavy_const, args.group_factor, args.q_bits, [0,1,31])
-            model = convert_mistral_offloading_channel_config(model, channel_config, args.channel)
-    else:
+    if args.mode == "ds":
         if args.architecture == "llama":
             model = convert_kvcache_llama_heavy_recent(model, config, args.heavy_const, args.group_factor, args.q_bits)
             model = convert_llama_channel_config(model, channel_config, args.channel)
@@ -100,6 +93,13 @@ if __name__ == '__main__':
         elif args.architecture == "qwen2":
             model = convert_kvcache_qwen2_heavy_recent(model, config, args.heavy_const, args.group_factor, args.q_bits)
             model = convert_qwen2_channel_config(model, channel_config, args.channel)
+    elif args.mode == "ds-offload":
+        if args.architecture == "llama":
+            model = convert_kvcache_llama_offloading(model, config, args.heavy_const, args.group_factor, args.q_bits, [0,1,31])
+            model = convert_llama_offloading_channel_config(model, channel_config, args.channel)
+        elif args.architecture == "mistral":
+            model = convert_kvcache_mistral_offloading(model, config, args.heavy_const, args.group_factor, args.q_bits, [0,1,31])
+            model = convert_mistral_offloading_channel_config(model, channel_config, args.channel)
 
 
     # model = convert_kvcache_mixtral_heavy_recent(model, config, 128, 4, 4)
