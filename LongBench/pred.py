@@ -21,6 +21,7 @@ from quest_attention import enable_quest_attention_eval
 from modify_llama import convert_kvcache_llama_heavy_recent, convert_llama_channel_config, change_llama_heavy_const
 from h2o_llama import convert_h2o, reset_h2o
 from streaming_llama import convert_streaming
+from sparq_llama import convert_sparq
 
 def parse_args(args=None):
     parser = argparse.ArgumentParser()
@@ -57,6 +58,7 @@ def parse_args(args=None):
     parser.add_argument("--ds", action="store_true", help="Enable Double Sparsity Attention")
     parser.add_argument("--h2o", action="store_true", help="Enable H2O Attention")
     parser.add_argument("--streaming", action="store_true", help="Enable StreamingLLM Attention")
+    parser.add_argument("--sparq", action="store_true", help="Enable Sparq Attention")
 
     return parser.parse_args(args)
 
@@ -308,6 +310,10 @@ def load_model_and_tokenizer(path, model_name, device):
         config = AutoConfig.from_pretrained(path)
         model = convert_streaming(model, config, args.token_budget, 8)
 
+    if args.sparq:
+        config = AutoConfig.from_pretrained(path)
+        model = convert_sparq(model, config, args.token_budget, args.group_factor, args.q_bits)
+
     return model, tokenizer
 
 
@@ -377,6 +383,8 @@ if __name__ == "__main__":
                 out_path = f"pred/{model_name}/{dataset}-h2o-{args.token_budget}.jsonl"
             elif args.streaming:
                 out_path = f"pred/{model_name}/{dataset}-streaming-{args.token_budget}.jsonl"
+            elif args.sparq:
+                out_path = f"pred/{model_name}/{dataset}-sparq-{args.token_budget}-{args.group_factor}-{args.q_bits}.jsonl"
             else:
                 out_path = f"pred/{model_name}/{dataset}.jsonl"
         prompt_format = dataset2prompt[dataset]

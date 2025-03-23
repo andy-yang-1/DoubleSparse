@@ -94,7 +94,7 @@ class LlamaAttention_heavy_hitter(nn.Module):
         #     gc.collect()
         #     torch.cuda.empty_cache()
         
-        if self.layer_idx < 2:
+        if q_len > 1 or self.layer_idx < 2:
             return self.flash_forward(
                 hidden_states=hidden_states,
                 attention_mask=attention_mask,
@@ -164,9 +164,9 @@ class LlamaAttention_heavy_hitter(nn.Module):
 
         outlier_num = self.head_dim // self.group_factor
 
-        sorted_indices = torch.topk(torch.abs(query_states), outlier_num, dim=-1).indices
+        sorted_indices = torch.topk(torch.abs(query_states), outlier_num, dim=-1).indices # [bsz, num_heads, 1, outlier_num]
         sorted_query_states = torch.gather(query_states, -1, sorted_indices)
-        sorted_key_states = torch.gather(key_states, -1, sorted_indices)
+        sorted_key_states = torch.gather(key_states, -1, sorted_indices.expand(-1, -1, kv_seq_len, -1))
 
         
         # quantization
@@ -176,7 +176,6 @@ class LlamaAttention_heavy_hitter(nn.Module):
 
         grouped_attn_weights = torch.matmul(sorted_query_states, sorted_key_states.transpose(2, 3)) / math.sqrt(self.head_dim // self.group_factor)
 
-        import IPython; IPython.embed(); exit()
 
         if attn_weights.size() != (bsz, self.num_heads, q_len, kv_seq_len):
             raise ValueError(

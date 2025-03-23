@@ -8,7 +8,7 @@ do
     do
         python -u pred.py \
             --model $model --task $task \
-            --ds --heavy_const $budget --group_factor 2 --q_bits 2 --channel q
+            --sparq --token_budget $budget --group_factor 8 --q_bits 16
     done
 done
 
